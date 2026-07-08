@@ -1,0 +1,12 @@
+KronQ
+Copyright 2026 KronQ Authors
+
+This product includes software derived from:
+
+  QuaRot (https://github.com/spcl/QuaRot), Apache License 2.0.
+  GPTAQ (https://github.com/Intelligent-Computing-Lab-Yale/GPTAQ).
+
+The CUDA Hadamard transform used at inference is from:
+
+  fast-hadamard-transform (https://github.com/Dao-AILab/fast-hadamard-transform),
+  Copyright (c) 2023, Tri Dao.

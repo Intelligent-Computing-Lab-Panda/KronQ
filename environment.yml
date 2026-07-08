@@ -1,0 +1,30 @@
+# Turnkey env for KronQ: brings nvcc (CUDA 12.1) so the CUDA kernels build anywhere,
+# plus the full pinned stack. After `conda env create -f environment.yml`:
+#     conda activate kronq
+#     pip install git+https://github.com/Dao-AILab/fast-hadamard-transform
+#     pip install ./runtime/kronq_kernels
+name: kronq
+channels:
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - cuda-nvcc=12.1          # nvcc to compile fast-hadamard-transform + runtime/kronq_kernels
+  - cuda-toolkit=12.1       # matches torch 2.5.1+cu121
+  - pip
+  - pip:
+    - --extra-index-url https://download.pytorch.org/whl/cu121
+    - torch==2.5.1
+    - transformers==4.51.0
+    - huggingface_hub==0.36.2
+    - tokenizers==0.21.4
+    - safetensors==0.7.0
+    - accelerate==0.27.2
+    - datasets==2.17.1
+    - peft==0.13.2
+    - sentencepiece==0.2.0
+    - protobuf==4.25.8
+    - numpy==1.26.4
+    - scipy==1.15.3
+    - primefac==2.0.12
+    - lm_eval==0.4.12

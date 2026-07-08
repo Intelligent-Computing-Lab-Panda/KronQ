@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+build/
+dist/
+
+# artifacts / data / checkpoints
+*.pth
+*.pt
+*.log
+*.csv
+grad_cache/
+experiments/
+wandb/
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store

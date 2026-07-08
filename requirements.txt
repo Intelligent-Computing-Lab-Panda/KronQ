@@ -1,0 +1,21 @@
+# KronQ — pinned to the validated stack (torch 2.5.1 + CUDA 12.1, sm_80/A100, py3.10).
+# Install torch from the cu121 index:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1
+transformers==4.51.0
+huggingface_hub==0.36.2
+tokenizers==0.21.4
+safetensors==0.7.0
+accelerate==0.27.2
+datasets==2.17.1
+peft==0.13.2
+sentencepiece==0.2.0
+protobuf==4.25.8
+numpy==1.26.4
+scipy==1.15.3
+primefac==2.0.12          # butterfly orthogonals for BiIP incoherence (calib)
+lm_eval==0.4.12           # zero-shot eval (--zs / --lm_eval)
+
+# Built from source (need nvcc on PATH — see README / environment.yml):
+#   fast-hadamard-transform :  pip install git+https://github.com/Dao-AILab/fast-hadamard-transform
+#   KronQ CUDA kernel        :  pip install ./runtime/kronq_kernels
