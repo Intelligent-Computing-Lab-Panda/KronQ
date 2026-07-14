@@ -169,7 +169,7 @@ of each entry point, so the flat `import xxx` style works from any directory.
 
 ```bibtex
 @article{lee2026kronq,
-  title={KronQ: LLM Quantization via a Kronecker-Factored Hessian},
+  title={KronQ: LLM Quantization via Kronecker-Factored Hessian},
   author={Lee, Donghyun and Li, Yuhang and Yin, Ruokai and Panda, Priyadarshini},
   journal={arXiv preprint arXiv:2607.07964},
   year={2026}
