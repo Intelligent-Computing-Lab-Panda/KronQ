@@ -39,6 +39,7 @@ research pipeline exactly (bf16 5.47 / W4 5.56 / W2 8.23).
 - [Quick start — run a released model](#quick-start)
 - [Model zoo](#model-zoo)
 - [Reproduce from scratch](#reproduce)
+- [Qwen3 support (experimental)](#qwen)
 - [Repository layout](#layout)
 - [Citation](#citation) · [Contact](#contact) · [Acknowledgements & License](#license)
 
@@ -132,6 +133,24 @@ A full one-command demo (precompute → quantize → deploy benchmark + generati
 | Deploy latency | `--save_packed` (step 3) → `runtime/bench_decode.py` |
 
 > **Note** — weight-only reproduces the paper with `--alpha 0.25`; weight-and-activation uses `--alpha 0.5`.
+
+<a name="qwen"></a>
+## Qwen3 support (experimental)
+
+The weight-only pipeline (H_G precompute → KronQ/GPTAQ/GPTQ/RTN quantize → PPL / lm-eval)
+also runs on **Qwen3** (0.6B / 8B / 14B). Qwen's **QK-Norm** (RMSNorm after q/k projection)
+is detected automatically in `calib/precompute_gradients.py`, which captures the q/k output
+gradients at the projection output so H_G is computed correctly. `--rotate` (QuaRot) is
+Llama-only. Full recipe: [`scripts/run_qwen3.sh`](scripts/run_qwen3.sh).
+
+Measured on Qwen3-8B, W4 per-channel (WikiText-2, seqlen 2048, 1× A100):
+
+| FP16 | KronQ | GPTAQ |
+|---|---|---|
+| 9.72 | **10.30** | 10.65 |
+
+Per-sublayer ablation (`KRONQ_INCOH_GROUP=qk|no_qk|attn|mlp`): on Qwen3-8B the BiIP gain
+comes mostly from q/k (BiIP on q/k only: **10.18**); restricting BiIP to the MLP hurts (10.81).
 
 <a name="layout"></a>
 ## Repository layout

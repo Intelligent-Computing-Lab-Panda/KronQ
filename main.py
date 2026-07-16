@@ -84,6 +84,8 @@ def main():
 
     # Rotate the weights
     if args.rotate:
+        assert "llama" in args.model.lower(), \
+            "--rotate (QuaRot) is validated on Llama only; for Qwen use the weight-only recipe without --rotate."
         rotation_utils.fuse_layer_norms(model)
         rotation_utils.rotate_model(model, args)
         utils.cleanup_memory(verbos=True)
@@ -135,7 +137,8 @@ def main():
                 print(f"Compressed {n_comp} Linears to {simulate_bits}-bit (max err {err:.2e})")
             
         elif not args.w_rtn: # Calibrated weight quantization (KronQ / GPTAQ / GPTQ)
-            assert "llama" in args.model.lower(), "This release supports Llama only."
+            assert any(k in args.model.lower() for k in ('llama', 'qwen')), \
+                "This release supports Llama and Qwen."
 
             trainloader = data_utils.get_loaders(
                 args.cal_dataset, nsamples=args.nsamples,

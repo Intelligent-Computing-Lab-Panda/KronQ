@@ -39,6 +39,13 @@ def precompute_fisher_gradients(model, dataloader, dev, args, save_dir):
         'self_attn.o_proj', 'mlp.gate_proj', 'mlp.up_proj', 'mlp.down_proj'
     ]
 
+    # Qwen-family QK-Norm: q_proj/k_proj outputs are reshaped and RMSNorm'd, so a
+    # module backward hook is unreliable there — hook the output tensor directly.
+    is_qk_norm = hasattr(layers[0].self_attn, 'q_norm')
+    qk_norm_layers = {'self_attn.q_proj', 'self_attn.k_proj'} if is_qk_norm else set()
+    if is_qk_norm:
+        print("QK-Norm detected: using forward+tensor hook for q_proj/k_proj")
+
     # Enable gradients for projection layers only
     for n, p in model.named_parameters():
         p.requires_grad = False
@@ -72,6 +79,7 @@ def precompute_fisher_gradients(model, dataloader, dev, args, save_dir):
         # Temporary storage for current backward pass
         current_grads = {}
         handles = []
+        tensor_handles = []  # tensor-level hooks for QK-Norm q/k; removed after the layer
 
         def make_grad_hook(name):
             def hook(module, grad_input, grad_output):
@@ -81,6 +89,21 @@ def precompute_fisher_gradients(model, dataloader, dev, args, save_dir):
 
             return hook
 
+        # QK-Norm q/k: capture d(loss)/d(projection output) via forward hook +
+        # retain_grad + tensor hook, bypassing the reshape/RMSNorm that follows.
+        def make_qknorm_hook(name):
+            def fwd_hook(module, inp, output):
+                if not output.requires_grad:
+                    return
+                output.retain_grad()
+
+                def tensor_hook(grad):
+                    current_grads[name] = grad.detach().reshape(-1, grad.shape[-1]).float()
+
+                tensor_handles.append(output.register_hook(tensor_hook))
+
+            return fwd_hook
+
         # Register hooks
         layer = layers[layer_idx]
         for name in sublayer_names:
@@ -88,7 +111,10 @@ def precompute_fisher_gradients(model, dataloader, dev, args, save_dir):
                 module = layer.get_submodule(name)
                 if hasattr(module, 'module'):
                     module = module.module
-                handles.append(module.register_full_backward_hook(make_grad_hook(name)))
+                if name in qk_norm_layers:
+                    handles.append(module.register_forward_hook(make_qknorm_hook(name)))
+                else:
+                    handles.append(module.register_full_backward_hook(make_grad_hook(name)))
             except AttributeError:
                 print(f"Warning: {name} not found in layer {layer_idx}")
 
@@ -143,6 +169,8 @@ def precompute_fisher_gradients(model, dataloader, dev, args, save_dir):
                 model.zero_grad()
 
         for h in handles:
+            h.remove()
+        for h in tensor_handles:
             h.remove()
 
         # Average and save G

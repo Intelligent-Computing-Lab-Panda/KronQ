@@ -15,15 +15,12 @@ def skip(*args, **kwargs):
     pass
 
 def get_rope_function_name(model):
-    if isinstance(model, LLAMA_MODEL):
-        return "apply_rotary_pos_emb"
-    raise NotImplementedError
+    # Llama and Qwen both use the same rotary helper name.
+    return "apply_rotary_pos_emb"
 
 
 def get_layers(model):
-    if isinstance(model, LLAMA_MODEL):
-        return model.model.layers
-    raise NotImplementedError
+    return model.model.layers
 
 
 def get_llama(model_name, hf_token):
@@ -39,10 +36,26 @@ def get_llama(model_name, hf_token):
     logging.info('---> Loading {} Model with seq_len: {}'.format(model_name, model.seqlen))
     return model
 
+
+def get_qwen(model_name, hf_token):
+    torch.nn.init.kaiming_uniform_ = skip
+    torch.nn.init.uniform_ = skip
+    torch.nn.init.normal_ = skip
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype='auto',
+                                                              token=hf_token,
+                                                              low_cpu_mem_usage=True)
+    model.seqlen = 2048  # same default eval context as Llama; override via --eval_seqlen
+
+    logging.info('---> Loading {} Model with seq_len: {}'.format(model_name, model.seqlen))
+    return model
+
+
 def get_model(model_name, hf_token=None):
     if 'llama' in model_name.lower():
         return get_llama(model_name, hf_token)
-    raise ValueError(f'Unknown model {model_name} (this release supports Llama only)')
+    if 'qwen' in model_name.lower():
+        return get_qwen(model_name, hf_token)
+    raise ValueError(f'Unknown model {model_name} (this release supports Llama and Qwen)')
 
 
 def get_model_type(model):

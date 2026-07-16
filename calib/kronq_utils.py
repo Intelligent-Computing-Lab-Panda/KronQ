@@ -31,6 +31,17 @@ def load_sublayer_gradient(grad_dir, layer_idx, sublayer_name):
     return G
 
 
+def _incoh_group_allows(name):
+    """Ablation switch: KRONQ_INCOH_GROUP=qk|no_qk|attn|mlp restricts BiIP to a
+    sublayer group (plain GPTAQ elsewhere). Default 'all' applies BiIP everywhere."""
+    grp = os.environ.get('KRONQ_INCOH_GROUP', 'all')
+    if grp == 'all':
+        return True
+    is_qk = ('q_proj' in name) or ('k_proj' in name)
+    return {'qk': is_qk, 'no_qk': not is_qk,
+            'attn': 'self_attn' in name, 'mlp': 'mlp' in name}.get(grp, True)
+
+
 class KronQ:
     def __init__(self, layer):
         self.layer = layer
@@ -462,7 +473,7 @@ def kronq_fwrd(model, dataloader, dev, args):
                     actorder=args.act_order,
                     static_groups=args.static_groups,
                     alpha=getattr(args, 'alpha', 0.25),
-                    incoh_rotate=getattr(args, 'incoh_rotate', False),
+                    incoh_rotate=getattr(args, 'incoh_rotate', False) and _incoh_group_allows(name),
                     incoh_mode=getattr(args, 'incoh_mode', 'full'),
                     incoh_kernel=getattr(args, 'incoh_kernel', 'kron'),
                     use_gptaq=use_gptaq,

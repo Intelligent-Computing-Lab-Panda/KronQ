@@ -18,6 +18,9 @@ supported_models = [
     'meta-llama/Meta-Llama-3-70B',
     'meta-llama/Llama-3.1-8B-Instruct',
     'meta-llama/Llama-3.2-1B-Instruct',
+    'Qwen/Qwen3-0.6B',
+    'Qwen/Qwen3-8B',
+    'Qwen/Qwen3-14B',
 ]
 supported_datasets = ['wikitext2', 'ptb', 'c4']
 
@@ -281,7 +284,7 @@ def cleanup_memory(verbos=True) -> None:
 
 def distribute_model(model) -> None:
     """Distribute the model across all available GPUs (auto-balanced)."""
-    no_split_module_classes = ['LlamaDecoderLayer']
+    no_split_module_classes = ['LlamaDecoderLayer', 'Qwen3DecoderLayer']
     max_memory = get_balanced_memory(model, no_split_module_classes=no_split_module_classes)
 
     device_map = infer_auto_device_map(
